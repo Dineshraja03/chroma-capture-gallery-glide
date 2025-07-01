@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Camera, User, Mail, Settings } from "lucide-react";
+import { Home, Camera, User, Mail } from "lucide-react";
 import { useIsMobile } from "../hooks/use-mobile";
 
 const Navigation = () => {
@@ -15,7 +15,6 @@ const Navigation = () => {
     { path: "/gallery", label: "Gallery", icon: Camera },
     { path: "/about", label: "About", icon: User },
     { path: "/contact", label: "Contact", icon: Mail },
-    { path: "/admin", label: "Admin", icon: Settings },
   ];
 
   if (isMobile) {
@@ -64,12 +63,12 @@ const Navigation = () => {
     );
   }
 
-  // Desktop navigation - centered at top
+  // Desktop navigation - properly centered at top
   return (
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-6 left-1/2 transform -translate-x-1/2 z-40"
+      className="fixed top-6 left-0 right-0 z-40 flex justify-center"
     >
       <div className="bg-white/10 backdrop-blur-md rounded-full px-8 py-4 border border-white/20 shadow-xl">
         <div className="flex items-center justify-center space-x-8">

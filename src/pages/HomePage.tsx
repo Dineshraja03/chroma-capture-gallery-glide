@@ -2,10 +2,11 @@
 import { motion } from "framer-motion";
 import Navigation from "../components/Navigation";
 import { ArrowDown } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 relative">
       {/* Animated background particles */}
       <div className="absolute inset-0">
         {[...Array(30)].map((_, i) => (
@@ -45,8 +46,8 @@ const HomePage = () => {
 
       <Navigation />
 
-      {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen px-8">
+      {/* Main Hero Section */}
+      <div className="flex items-center justify-center min-h-screen px-8 pb-20 md:pb-0">
         <div className="text-center max-w-4xl">
           {/* Photographer Name */}
           <motion.h1
@@ -83,9 +84,12 @@ const HomePage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-medium tracking-wide hover:bg-white/20 transition-all duration-300 shadow-xl">
+            <Link
+              to="/gallery"
+              className="inline-block bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-medium tracking-wide hover:bg-white/20 transition-all duration-300 shadow-xl"
+            >
               Enter Gallery
-            </button>
+            </Link>
           </motion.div>
         </div>
       </div>
@@ -102,6 +106,45 @@ const HomePage = () => {
         </div>
       </motion.div>
 
+      {/* Additional Content Section for Scrolling */}
+      <div className="min-h-screen flex items-center justify-center px-8">
+        <div className="text-center max-w-4xl">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-4xl md:text-6xl font-serif text-white mb-6"
+          >
+            Capturing Moments
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-lg md:text-xl text-white/70 mb-8 max-w-2xl mx-auto"
+          >
+            Every photograph tells a story, every frame captures an emotion. 
+            Discover the world through my lens and experience the magic of 
+            photography that transcends the ordinary.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-lg mx-auto"
+          >
+            {["Nature", "Portrait", "Landscape", "Street", "Abstract", "Wildlife"].map((category, index) => (
+              <div
+                key={category}
+                className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20 text-white text-center hover:bg-white/20 transition-all duration-300"
+              >
+                {category}
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
       {/* Floating glass elements */}
       <motion.div
         className="absolute top-20 right-20 w-32 h-32 bg-white/5 backdrop-blur-sm rounded-full border border-white/10"
@@ -117,7 +160,7 @@ const HomePage = () => {
       />
       
       <motion.div
-        className="absolute bottom-20 left-20 w-20 h-20 bg-purple-500/10 backdrop-blur-sm rounded-full border border-purple-300/20"
+        className="absolute bottom-40 left-20 w-20 h-20 bg-purple-500/10 backdrop-blur-sm rounded-full border border-purple-300/20"
         animate={{ 
           y: [0, 15, 0],
           x: [0, 10, 0]

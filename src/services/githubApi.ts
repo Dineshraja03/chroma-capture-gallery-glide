@@ -1,9 +1,8 @@
 
 // GitHub API service for uploading images
-// Note: This stores the token client-side which is not secure for production use
-// Consider using Supabase integration for secure file storage
+// Uses environment variables for secure token storage
 
-const GITHUB_TOKEN = "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"; // This should be stored securely
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || ""; // Will be populated from repository secrets
 const GITHUB_OWNER = "your-username"; // Replace with your GitHub username
 const GITHUB_REPO = "your-repo-name"; // Replace with your repository name
 const IMAGES_FOLDER = "uploaded-images";
@@ -19,6 +18,10 @@ export const uploadImageToGitHub = async (
   filename: string
 ): Promise<GitHubUploadResponse> => {
   try {
+    if (!GITHUB_TOKEN) {
+      throw new Error('GitHub token not configured. Please set VITE_GITHUB_TOKEN environment variable.');
+    }
+
     // Convert file to base64
     const base64Content = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -38,6 +41,8 @@ export const uploadImageToGitHub = async (
     // GitHub API endpoint
     const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
 
+    console.log('Uploading to GitHub:', { filePath, apiUrl });
+
     // Upload to GitHub
     const response = await fetch(apiUrl, {
       method: 'PUT',
@@ -53,10 +58,13 @@ export const uploadImageToGitHub = async (
     });
 
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status}`);
+      const errorData = await response.text();
+      console.error('GitHub API error:', response.status, errorData);
+      throw new Error(`GitHub API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('Upload successful:', data);
     
     return {
       success: true,
@@ -73,6 +81,11 @@ export const uploadImageToGitHub = async (
 
 export const deleteImageFromGitHub = async (filePath: string): Promise<boolean> => {
   try {
+    if (!GITHUB_TOKEN) {
+      console.error('GitHub token not configured');
+      return false;
+    }
+
     // First, get the file info to get the SHA
     const getResponse = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
@@ -84,6 +97,7 @@ export const deleteImageFromGitHub = async (filePath: string): Promise<boolean> 
     );
 
     if (!getResponse.ok) {
+      console.error('Failed to get file info for deletion');
       return false;
     }
 
