@@ -2,10 +2,16 @@
 // GitHub API service for uploading images
 // Uses environment variables for secure token storage
 
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || ""; // Will be populated from repository secrets
-const GITHUB_OWNER = "your-username"; // Replace with your GitHub username
-const GITHUB_REPO = "your-repo-name"; // Replace with your repository name
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || ""; 
+const GITHUB_OWNER = import.meta.env.VITE_GITHUB_OWNER || localStorage.getItem('github_owner') || "";
+const GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || localStorage.getItem('github_repo') || "";
 const IMAGES_FOLDER = "uploaded-images";
+
+export interface GitHubConfig {
+  token: string;
+  owner: string;
+  repo: string;
+}
 
 export interface GitHubUploadResponse {
   success: boolean;
@@ -13,13 +19,41 @@ export interface GitHubUploadResponse {
   error?: string;
 }
 
+export const isGitHubConfigured = (): boolean => {
+  const token = GITHUB_TOKEN || localStorage.getItem('github_token');
+  const owner = GITHUB_OWNER || localStorage.getItem('github_owner');
+  const repo = GITHUB_REPO || localStorage.getItem('github_repo');
+  
+  return !!(token && owner && repo);
+};
+
+export const getGitHubConfig = (): GitHubConfig | null => {
+  const token = GITHUB_TOKEN || localStorage.getItem('github_token');
+  const owner = GITHUB_OWNER || localStorage.getItem('github_owner');
+  const repo = GITHUB_REPO || localStorage.getItem('github_repo');
+  
+  if (!token || !owner || !repo) {
+    return null;
+  }
+  
+  return { token, owner, repo };
+};
+
+export const setGitHubConfig = (config: GitHubConfig): void => {
+  localStorage.setItem('github_token', config.token);
+  localStorage.setItem('github_owner', config.owner);
+  localStorage.setItem('github_repo', config.repo);
+};
+
 export const uploadImageToGitHub = async (
   file: File,
   filename: string
 ): Promise<GitHubUploadResponse> => {
   try {
-    if (!GITHUB_TOKEN) {
-      throw new Error('GitHub token not configured. Please set VITE_GITHUB_TOKEN environment variable.');
+    const config = getGitHubConfig();
+    
+    if (!config) {
+      throw new Error('GitHub configuration not found. Please configure your GitHub settings first.');
     }
 
     // Convert file to base64
@@ -39,15 +73,15 @@ export const uploadImageToGitHub = async (
     const filePath = `${IMAGES_FOLDER}/${Date.now()}-${filename}`;
 
     // GitHub API endpoint
-    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
+    const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
 
-    console.log('Uploading to GitHub:', { filePath, apiUrl });
+    console.log('Uploading to GitHub:', { filePath, apiUrl, owner: config.owner, repo: config.repo });
 
     // Upload to GitHub
     const response = await fetch(apiUrl, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Authorization': `token ${config.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -81,17 +115,19 @@ export const uploadImageToGitHub = async (
 
 export const deleteImageFromGitHub = async (filePath: string): Promise<boolean> => {
   try {
-    if (!GITHUB_TOKEN) {
-      console.error('GitHub token not configured');
+    const config = getGitHubConfig();
+    
+    if (!config) {
+      console.error('GitHub configuration not found');
       return false;
     }
 
     // First, get the file info to get the SHA
     const getResponse = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
+      `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`,
       {
         headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Authorization': `token ${config.token}`,
         },
       }
     );
@@ -105,11 +141,11 @@ export const deleteImageFromGitHub = async (filePath: string): Promise<boolean> 
 
     // Delete the file
     const deleteResponse = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
+      `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`,
       {
         method: 'DELETE',
         headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Authorization': `token ${config.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

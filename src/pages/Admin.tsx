@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "../components/Navigation";
-import { Upload, Trash2, Edit, Eye, Plus, X, Check } from "lucide-react";
+import GitHubConfigModal from "../components/GitHubConfigModal";
+import { Upload, Trash2, Edit, Eye, Plus, X, Check, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { uploadImageToGitHub, deleteImageFromGitHub } from "../services/githubApi";
+import { uploadImageToGitHub, deleteImageFromGitHub, isGitHubConfigured } from "../services/githubApi";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demonstration
@@ -44,6 +45,7 @@ interface ImageData {
 const Admin = () => {
   const [images, setImages] = useState<ImageData[]>(mockImages);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [editingImage, setEditingImage] = useState<ImageData | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -60,6 +62,17 @@ const Admin = () => {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newImage.file) return;
+
+    // Check if GitHub is configured
+    if (!isGitHubConfigured()) {
+      toast({
+        title: "GitHub Not Configured",
+        description: "Please configure your GitHub settings first",
+        variant: "destructive",
+      });
+      setShowConfigModal(true);
+      return;
+    }
 
     setUploading(true);
     
@@ -94,7 +107,7 @@ const Admin = () => {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload image to GitHub. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload image to GitHub. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -164,6 +177,32 @@ const Admin = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* GitHub Config Button */}
+            {!isGitHubConfigured() && (
+              <Button
+                onClick={() => setShowConfigModal(true)}
+                variant="outline"
+                className={`${
+                  isDarkMode 
+                    ? 'border-red-500/50 text-red-400 hover:bg-red-500/10' 
+                    : 'border-red-500 text-red-600 hover:bg-red-50'
+                }`}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Configure GitHub
+              </Button>
+            )}
+            
+            {/* Settings Button */}
+            <Button
+              onClick={() => setShowConfigModal(true)}
+              variant="outline"
+              className={isDarkMode ? 'border-white/20 text-white' : 'border-gray-300 text-gray-800'}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              GitHub Settings
+            </Button>
+            
             {/* Dark/Light Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -303,6 +342,13 @@ const Admin = () => {
           ))}
         </motion.div>
       </div>
+
+      {/* GitHub Configuration Modal */}
+      <GitHubConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        isDarkMode={isDarkMode}
+      />
 
       {/* Upload Modal */}
       <AnimatePresence>
